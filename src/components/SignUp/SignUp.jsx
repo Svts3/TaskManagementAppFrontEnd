@@ -3,6 +3,7 @@ import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formSchema } from "./FormSchema";
+import styles from "../styles.module.css";
 import Input from "./Input";
 export default function SignUp() {
 
@@ -44,7 +45,7 @@ export default function SignUp() {
 
 
     return (
-        <div className="sign-up">
+        <div className={styles['sign-up']}>
             <form action={handleSubmit(handleSubmitForm)}>
                 <Input name="first-name" id="first-name" type="text" required={true} register={register} errors={errors}/>
                 <Input name="last-name" id="last-name" type="text"  required={true} register={register} errors={errors}/>
