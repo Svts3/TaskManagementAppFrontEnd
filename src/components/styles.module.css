@@ -1,0 +1,28 @@
+.sign-up{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-direction: column;
+    margin-top: 5rem;
+    border: 1px solid black;
+}
+
+.sign-in{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-direction: column;
+    margin-top: 5rem;
+    border: 1px solid black;
+}
+
+.error{
+    color: red;
+    font-size: bold;
+}
+.success{
+    color: green;
+    font-size: bold;
+}
+
+
