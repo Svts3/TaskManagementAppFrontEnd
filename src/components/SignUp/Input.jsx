@@ -1,24 +1,17 @@
-import PropTypes from "prop-types"
-export default function Input({name, id, type, required, register, errors}){
-
-    return(
-        <>
-        <label htmlFor={id}>{name}</label>
-        <br />
-        <input {...register(name)} name={name} id={id} type={type}/>
-        <br />
-        {errors?.[name] && <span style={{color:"red"}}>{errors?.[name]?.message}</span> }
-        <br />  
-        </>
-    )
-
-}
-
-
-Input.propTypes = {
-    name: PropTypes.string,
-    id: PropTypes.string,
-    type: PropTypes.string.isRequired,
-    required: PropTypes.bool.isRequired,
-    setInputsAreValid: PropTypes.func.isRequired
+export default function Input({ name, id, type, required, register, errors }) {
+    return (
+        <div className="input-container">
+            <input
+                {...register(name)}
+                id={id}
+                type={type}
+                required={required}
+                placeholder={name.replace("-", " ").toUpperCase()}
+                className={`input-field ${errors[name] ? "input-error" : ""}`}
+            />
+            {errors[name] && (
+                <p className="error-text">{errors[name].message}</p>
+            )}
+        </div>
+    );
 }
