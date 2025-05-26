@@ -1,0 +1,65 @@
+/* Основний стиль для картки воркспейсу */
+.workspace {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    text-align: center;
+    width: 100%; /* Адаптивна ширина */
+    max-width: 380px; /* Максимальна ширина */
+    height: 220px;
+    position: relative;
+    z-index: 0;
+    border: 2px solid #ddd;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    box-sizing: border-box; /* Враховуємо padding і border */
+  }
+  
+  /* Ефект при наведенні на картку воркспейсу */
+  .workspace:hover {
+    transform: translateY(-5px); /* Легкий підйом картки */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Посилена тінь */
+    border-color: #5c6bc0; /* Синій бордер при наведенні */
+  }
+  
+  /* Заголовок воркспейсу */
+  #workspace-name {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  /* Стиль для кількості учасників */
+  .members-count {
+    font-size: 1.1rem;
+    color: #777;
+    margin-bottom: 10px;
+  }
+  
+  /* Стиль для імені творця (якщо відображається) */
+  .creator {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  
+  /* Кнопка для переходу до воркспейсу */
+  .visit-button {
+    padding: 10px 18px;
+    font-size: 1rem;
+    background-color: #5c6bc0; /* Синій фон для кнопки */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .visit-button:hover {
+    background-color: #3f4f93; /* Темніший синій при наведенні */
+  }
+  
+  .visit-button:focus {
+    outline: none;
+  }
