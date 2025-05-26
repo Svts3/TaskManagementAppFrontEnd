@@ -1,0 +1,40 @@
+/* Загальний стиль для сторінки */
+.user-workspaces {
+  font-family: 'Arial', sans-serif;
+  padding: 30px;
+  background-color: #f4f7fc;
+}
+
+/* Заголовок сторінки */
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+/* Повідомлення про помилку */
+.error-message {
+  color: red;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Повідомлення про завантаження */
+.loading-message {
+  color: #777;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Контейнер для списку воркспейсів */
+.workspaces-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 60px; /* Збільшена відстань між картками */
+  margin-top: 20px;
+}
