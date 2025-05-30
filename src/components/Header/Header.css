@@ -43,9 +43,22 @@ header {
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
+.header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* space between nav and email */
+}
+
 .nav-buttons {
     display: flex;
-    gap: 12px;
+    align-items: center;
+    gap: 8px; /* space between buttons */
 }
 
 .button {
@@ -85,4 +98,11 @@ header {
 
 .button.profile:hover {
     background-color: #047857;
+}
+
+.user-email {
+  margin-left: 8px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
 }

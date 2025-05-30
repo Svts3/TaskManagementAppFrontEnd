@@ -555,6 +555,9 @@
 .tasks-board > div {
   min-width: 340px !important;
   max-width: 420px !important;
+  /* Add or update the following line to increase height */
+  max-height: 90vh !important;
+  min-height: 500px;
 }
 
 /* Responsive design */
@@ -892,6 +895,28 @@
   }
 }
 
+.task-overview-modal-content {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+  padding: 32px 40px 28px 40px;
+  min-width: 700px;
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+  .task-overview-modal-content {
+    min-width: 0;
+    max-width: 98vw;
+    padding: 18px 4vw;
+  }
+}
+
 .app-header {
   background: #fff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -918,4 +943,23 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: #111827;
+}
+
+.truncate-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre-line;
+  max-width: 340px;
+  display: block;
+  word-break: break-word;
+}
+
+.task-overview-modal-content h2,
+.task-overview-modal-content .task-overview-section p {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.task-overview-section p {
+  white-space: pre-line;
 }

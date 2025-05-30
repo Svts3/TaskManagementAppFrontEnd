@@ -1,11 +1,31 @@
 import PropTypes from 'prop-types';
 
-export default function TaskOverviewModal({ task, isOpen, onClose, isLoading = false }) {
-  if (!isOpen) return null;
+function getTimeLeftString(deadlineDate, status) {
+  if (!deadlineDate) return "";
+  if (status === "DONE") return "";
+  const now = new Date();
+  const deadline = new Date(deadlineDate);
+  let diff = deadline - now;
+  if (diff <= 0) return "Time's up";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  diff -= days * (1000 * 60 * 60 * 24);
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  diff -= hours * (1000 * 60 * 60);
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (days > 0) return `${days}d ${hours}h left`;
+  if (hours > 0) return `${hours}h ${minutes}m left`;
+  return `${minutes}m left`;
+}
+
+export default function TaskOverviewModal({ task, isOpen, onClose, isLoading = false, onEditTask, onDeleteTask }) {
+  if (!isOpen || !task) return null;
 
   return (
     <div className="modal" onClick={onClose}>
-      <div className="modal-content task-overview" onClick={e => e.stopPropagation()}>
+      <div
+        className="task-overview-modal-content"
+        onClick={e => e.stopPropagation()}
+      >
         {isLoading ? (
           <div className="task-overview-loading">
             <div className="loading-spinner"></div>
@@ -14,14 +34,15 @@ export default function TaskOverviewModal({ task, isOpen, onClose, isLoading = f
         ) : (
           <>
             <div className="task-overview-header">
-              <h2>{task.title}</h2>
+              <h2 style={{ wordBreak: "break-word", overflowWrap: "break-word" }}>{task.title}</h2>
               <button type="button" className="close-button" onClick={onClose}>×</button>
             </div>
-            
             <div className="task-overview-content">
               <div className="task-overview-section">
                 <h3>Description</h3>
-                <p>{task.content || "No description provided."}</p>
+                <p style={{ whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
+                  {task.content || "No description provided."}
+                </p>
               </div>
 
               <div className="task-overview-section">
@@ -57,7 +78,39 @@ export default function TaskOverviewModal({ task, isOpen, onClose, isLoading = f
                 ) : (
                   <p>No performers assigned</p>
                 )}
+                <p style={{ marginTop: "12px" }}>
+                  <strong>Deadline:</strong>{" "}
+                  {task.deadlineDate
+                    ? (
+                        <>
+                          <span className={new Date(task.deadlineDate) < new Date() && task.status !== "DONE" ? "overdue" : ""}>
+                            {new Date(task.deadlineDate).toLocaleString()}
+                            {new Date(task.deadlineDate) < new Date() && task.status !== "DONE" && " (Overdue)"}
+                          </span>
+                          <span style={{ marginLeft: 8, color: "#888", fontSize: "0.95em" }}>
+                            {getTimeLeftString(task.deadlineDate, task.status)}
+                          </span>
+                        </>
+                      )
+                    : "No deadline"}
+                </p>
               </div>
+            </div>
+            <div className="task-overview-actions" style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
+              <button
+                className="edit-task-button"
+                onClick={() => onEditTask && onEditTask(task)}
+                style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", cursor: "pointer" }}
+              >
+                Edit Task
+              </button>
+              <button
+                className="delete-task-button"
+                onClick={() => onDeleteTask && onDeleteTask(task.id)}
+                style={{ background: "#dc2626", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", cursor: "pointer" }}
+              >
+                Delete Task
+              </button>
             </div>
           </>
         )}
@@ -82,8 +135,10 @@ TaskOverviewModal.propTypes = {
       firstName: PropTypes.string.isRequired,
       lastName: PropTypes.string.isRequired,
     })),
-  }).isRequired,
+  }),
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  onEditTask: PropTypes.func,
+  onDeleteTask: PropTypes.func,
 };

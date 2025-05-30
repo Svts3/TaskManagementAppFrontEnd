@@ -13,6 +13,23 @@ import TaskFilters from "./TaskFilters";
 import RemovePermissionsModal from "./RemovePermissionsModal";
 import { decodeJwt } from "../../utils/tokenUtils";
 
+// Reusable polling query hook
+function usePollingQuery({ queryKey, url, accessToken, interval = 30000 }) {
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      return response.data;
+    },
+    enabled: !!accessToken,
+    refetchInterval: interval,
+    refetchIntervalInBackground: true,
+    staleTime: 1000,
+  });
+}
+
 export default function WorkspacePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -67,18 +84,11 @@ export default function WorkspacePage() {
     data: workspaceData,
     isLoading: isWorkspaceLoading,
     error: workspaceError,
-  } = useQuery({
+  } = usePollingQuery({
     queryKey: ["workspace", id],
-    queryFn: async () => {
-      const response = await axios.get(`http://localhost:8080/workspaces/${id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      return response.data;
-    },
-    enabled: !!accessToken,
-    refetchInterval: 2000, // Poll every 2 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 1000 // Consider data stale after 1 second
+    url: `http://localhost:8080/workspaces/${id}`,
+    accessToken,
+    interval: 30000,
   });
 
   // Fetch tasks with polling
@@ -86,18 +96,11 @@ export default function WorkspacePage() {
     data: tasks,
     isLoading: isTasksLoading,
     error: tasksError,
-  } = useQuery({
+  } = usePollingQuery({
     queryKey: ["tasks", id],
-    queryFn: async () => {
-      const response = await axios.get(`http://localhost:8080/tasks/workspace/${id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      return response.data;
-    },
-    enabled: !!accessToken,
-    refetchInterval: 1000, // Poll every 1 second
-    refetchIntervalInBackground: true,
-    staleTime: 500 // Consider data stale after 0.5 seconds
+    url: `http://localhost:8080/tasks/workspace/${id}`,
+    accessToken,
+    interval: 30000,
   });
 
   // Create task mutation
