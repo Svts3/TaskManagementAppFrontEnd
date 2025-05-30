@@ -1,0 +1,69 @@
+.task-filters {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #4b5563;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.filter-select {
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: white;
+  min-width: 140px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.filter-select:hover {
+  border-color: #adb5bd;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.1);
+}
+
+@media (max-width: 1200px) {
+  .task-filters {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+  
+  .filter-select {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .task-filters {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+}

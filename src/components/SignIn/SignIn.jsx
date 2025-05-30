@@ -24,6 +24,7 @@ export default function SignIn() {
                     setSignInIsSuccessful(true);
                     localStorage.setItem("accessToken", response.data.accessToken);
                     localStorage.setItem("refreshToken", response.data.refreshToken);
+                    window.dispatchEvent(new Event("authChanged")); // Notify Header
                 }
             } catch (e) {
                 setSignInIsSuccessful(false);
