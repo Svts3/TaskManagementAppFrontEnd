@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../api/axiosInstance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Workspace from "../Workspace/Workspace";
 import "./UserWorkspaces.css";
@@ -16,11 +16,7 @@ export default function UserWorkspaces() {
   const { data: workspaces = [], isLoading, error } = useQuery({
     queryKey: ["userWorkspaces"],
     queryFn: async () => {
-      const response = await axios.get("http://localhost:8080/workspaces/", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await api.get("/workspaces/");
       // Ensure we always return an array
       return Array.isArray(response.data) ? response.data : [];
     },
@@ -33,8 +29,8 @@ export default function UserWorkspaces() {
     setIsCreating(true);
     setCreateError(null);
     try {
-      await axios.post(
-        "http://localhost:8080/workspaces/",
+      await api.post(
+        "/workspaces/",
         { name: workspaceName },
         {
           headers: {

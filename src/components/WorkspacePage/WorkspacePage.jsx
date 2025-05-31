@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "../../api/axiosInstance";
 import { useState, useEffect } from "react";
 import "./WorkspacePage.css";
 import TaskBoard from "./TaskBoard";
@@ -18,7 +18,7 @@ function usePollingQuery({ queryKey, url, accessToken, interval = 30000 }) {
   return useQuery({
     queryKey,
     queryFn: async () => {
-      const response = await axios.get(url, {
+      const response = await api.get(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       return response.data;
@@ -44,6 +44,7 @@ export default function WorkspacePage() {
     title: "",
     content: "",
     deadlineDate: "",
+    deadlineTime: "",
     status: "TO_DO",
     performers: [],
   });
@@ -107,7 +108,7 @@ export default function WorkspacePage() {
   const createTaskMutation = useMutation({
     mutationFn: async (task) => {
       console.log("Creating task with data:", task);
-      const response = await axios.post(`http://localhost:8080/tasks/`, task, {
+      const response = await api.post(`http://localhost:8080/tasks/`, task, {
         headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
       });
       return response.data;
@@ -120,7 +121,7 @@ export default function WorkspacePage() {
       });
       
       setIsTaskModalOpen(false);
-      setTaskForm({ title: "", content: "", deadlineDate: "", status: "TO_DO", performers: [] });
+      setTaskForm({ title: "", content: "", deadlineDate: "", deadlineTime: "", status: "TO_DO", performers: [] });
       setTaskFormError("");
     },
     onError: (error) => {
@@ -133,7 +134,7 @@ export default function WorkspacePage() {
   // Update task mutation
   const updateTaskMutation = useMutation({
     mutationFn: async (task) => {
-      const response = await axios.patch(`http://localhost:8080/tasks/${task.id}`, task, {
+      const response = await api.patch(`http://localhost:8080/tasks/${task.id}`, task, {
         headers: { 
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("accessToken")}` 
@@ -152,7 +153,7 @@ export default function WorkspacePage() {
       
       setIsTaskModalOpen(false);
       setEditingTask(null);
-      setTaskForm({ title: "", content: "", deadlineDate: "", status: "TO_DO", performers: [] });
+      setTaskForm({ title: "", content: "", deadlineDate: "", deadlineTime: "", status: "TO_DO", performers: [] });
       setTaskFormError("");
     },
     onError: (error) => {
@@ -165,7 +166,7 @@ export default function WorkspacePage() {
   // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId) => {
-      await axios.delete(`http://localhost:8080/tasks/${taskId}`, {
+      await api.delete(`http://localhost:8080/tasks/${taskId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
       });
     },
@@ -198,7 +199,7 @@ export default function WorkspacePage() {
   const inviteUserMutation = useMutation({
     mutationFn: async ({ emails }) => {
       const emailList = emails.filter(email => email.trim() !== '');
-      const response = await axios.post(
+      const response = await api.post(
         `http://localhost:8080/workspaces/${id}/users`,
         emailList,
         { 
@@ -224,7 +225,7 @@ export default function WorkspacePage() {
   // Assign permissions mutation
   const assignRoleMutation = useMutation({
     mutationFn: async ({ memberId, permissions }) => {
-      const response = await axios.post(
+      const response = await api.post(
         `http://localhost:8080/workspaces/${id}/users/${memberId}/permissions`,
         permissions,
         { 
@@ -257,7 +258,7 @@ export default function WorkspacePage() {
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: async (userId) => {
-      const response = await axios.patch(
+      const response = await api.patch(
         `http://localhost:8080/workspaces/${id}/users/${userId}`,
         { active: false },
         {
@@ -287,7 +288,7 @@ export default function WorkspacePage() {
   // Remove permissions mutation
   const removePermissionsMutation = useMutation({
     mutationFn: async ({ memberId, permissions }) => {
-      const response = await axios.delete(
+      const response = await api.delete(
         `http://localhost:8080/workspaces/${id}/users/${memberId}/permissions`,
         { 
           headers: { 
@@ -326,6 +327,12 @@ export default function WorkspacePage() {
       return;
     }
 
+    // Compose deadlineDate with time if both are present
+    let deadlineDate = taskForm.deadlineDate;
+    if (taskForm.deadlineDate && taskForm.deadlineTime) {
+      deadlineDate = `${taskForm.deadlineDate.split('T')[0]}T${taskForm.deadlineTime}`;
+    }
+
     const token = localStorage.getItem("accessToken");
     const decodedToken = decodeJwt(token);
     const userId = Number(decodedToken?.id);
@@ -335,6 +342,7 @@ export default function WorkspacePage() {
       return;
     }    const taskData = {
       ...taskForm,
+      deadlineDate: deadlineDate || null,
       id: editingTask?.id, // Include ID for updates
       workspace: { id: Number(id) },
       performers: taskForm.performers, // Keep the full performer objects
@@ -362,7 +370,12 @@ export default function WorkspacePage() {
     setTaskForm({
       title: task.title || "",
       content: task.content || "",
-      deadlineDate: task.deadlineDate ? new Date(task.deadlineDate).toISOString().split('T')[0] : "",
+      deadlineDate: task.deadlineDate
+        ? new Date(task.deadlineDate).toISOString().slice(0, 16)
+        : "",
+      deadlineTime: task.deadlineDate
+        ? new Date(task.deadlineDate).toISOString().slice(11, 16)
+        : "",
       status: task.status || "TO_DO",
       performers: Array.isArray(task.performers) ? task.performers : [],
       creator: task.creator || { id: userId },
@@ -424,52 +437,52 @@ export default function WorkspacePage() {
 
   // Filter and sorting functions
   const getFilteredSortedTasks = () => {
-    let filtered = tasks || [];
+  let filtered = tasks || [];
 
-    // Filter by status
-    if (taskStatusFilter !== 'ALL') {
-      filtered = filtered.filter(t => t.status === taskStatusFilter);
-    }
+  const userId = decodeJwt(accessToken)?.id;
 
-    // Sorting
-    const priorityMap = { HIGH: 3, MEDIUM: 2, LOW: 1, '': 0 };
-    
-    return filtered.slice().sort((a, b) => {
-      switch (taskSort) {
-        case 'creationDateAsc': {
-          return new Date(a.creationDate) - new Date(b.creationDate);
-        }
-        case 'creationDateDesc': {
-          return new Date(b.creationDate) - new Date(a.creationDate);
-        }
-        case 'deadlineDateAsc': {
-          const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
-          const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
-          return aDate - bDate;
-        }
-        case 'deadlineDateDesc': {
-          const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
-          const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
-          return bDate - aDate;
-        }
-        case 'titleAsc': {
-          return (a.title || '').localeCompare(b.title || '');
-        }
-        case 'titleDesc': {
-          return (b.title || '').localeCompare(a.title || '');
-        }
-        case 'priorityDesc': {
-          return (priorityMap[b.priority] || 0) - (priorityMap[a.priority] || 0);
-        }
-        case 'priorityAsc': {
-          return (priorityMap[a.priority] || 0) - (priorityMap[b.priority] || 0);
-        }
-        default: {
-          return 0;
-        }
+  // Filter by status
+  if (taskStatusFilter === 'My Tasks') {
+    // Лише задачі, де користувач є виконавцем
+    filtered = filtered.filter(t =>
+      t.performers.some(p => p.id === Number(userId))
+    );
+  } else if (taskStatusFilter !== 'ALL') {
+    filtered = filtered.filter(t => t.status === taskStatusFilter);
+  }
+
+  // Sorting
+  const priorityMap = { HIGH: 3, MEDIUM: 2, LOW: 1, '': 0 };
+
+  return filtered.slice().sort((a, b) => {
+    switch (taskSort) {
+      case 'creationDateAsc':
+        return new Date(a.creationDate) - new Date(b.creationDate);
+      case 'creationDateDesc':
+        return new Date(b.creationDate) - new Date(a.creationDate);
+      case 'deadlineDateAsc': {
+        const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
+        const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
+        return aDate - bDate;
       }
-    });
-  };
+      case 'deadlineDateDesc': {
+        const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
+        const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
+        return bDate - aDate;
+      }
+      case 'titleAsc':
+        return (a.title || '').localeCompare(b.title || '');
+      case 'titleDesc':
+        return (b.title || '').localeCompare(a.title || '');
+      case 'priorityDesc':
+        return (priorityMap[b.priority] || 0) - (priorityMap[a.priority] || 0);
+      case 'priorityAsc':
+        return (priorityMap[a.priority] || 0) - (priorityMap[b.priority] || 0);
+      default:
+        return 0;
+    }
+  });
+};
   // Group tasks by status for TaskBoard columns
   const getTaskColumns = () => {
     const filtered = getFilteredSortedTasks();
@@ -478,6 +491,7 @@ export default function WorkspacePage() {
         TO_DO: filtered.filter(t => t.status === 'TO_DO'),
         IN_PROGRESS: filtered.filter(t => t.status === 'IN_PROGRESS'),
         DONE: filtered.filter(t => t.status === 'DONE'),
+        My_Tasks: filtered.filter(t => t.status === 'My Tasks'),
       };
     } else {
       return {
@@ -568,7 +582,7 @@ export default function WorkspacePage() {
                 onClick={() => {
                   setIsTaskModalOpen(true);
                   setEditingTask(null);
-                  setTaskForm({ title: "", content: "", deadlineDate: "", status: "TO_DO", performers: [] });
+                  setTaskForm({ title: "", content: "", deadlineDate: "", deadlineTime: "", status: "TO_DO", performers: [] });
                 }}
               >
                 Create Task
@@ -598,7 +612,7 @@ export default function WorkspacePage() {
         onClose={() => {
           setIsTaskModalOpen(false);
           setEditingTask(null);
-          setTaskForm({ title: "", content: "", deadlineDate: "", status: "TO_DO", performers: [] });
+          setTaskForm({ title: "", content: "", deadlineDate: "", deadlineTime: "", status: "TO_DO", performers: [] });
           setTaskFormError("");
         }}
         onSubmit={handleTaskSubmit}

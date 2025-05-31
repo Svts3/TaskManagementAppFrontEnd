@@ -20,6 +20,7 @@ export default function TaskFilters({
           <option value="TO_DO">To Do</option>
           <option value="IN_PROGRESS">In Progress</option>
           <option value="DONE">Done</option>
+          <option value="MY_TASKS">My Tasks</option>
         </select>
       </div>
 

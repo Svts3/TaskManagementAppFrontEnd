@@ -36,12 +36,45 @@ export default function TaskModal({ isOpen, onClose, onSubmit, taskForm, setTask
             />
           </div>
           <div className="form-group">
-            <label>Deadline</label>
-            <input
-              type="date"
-              value={taskForm.deadlineDate}
-              onChange={e => setTaskForm({ ...taskForm, deadlineDate: e.target.value })}
-            />
+            <label>
+              Deadline Date:
+              <input
+                type="date"
+                value={taskForm.deadlineDate ? taskForm.deadlineDate.split('T')[0] : ""}
+                onChange={e => setTaskForm(form => ({
+                  ...form,
+                  deadlineDate: e.target.value
+                    ? (form.deadlineTime
+                        ? `${e.target.value}T${form.deadlineTime}`
+                        : `${e.target.value}T23:59`)
+                    : ""
+                }))}
+                required
+              />
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
+              Deadline Time:
+              <input
+                type="time"
+                value={taskForm.deadlineDate && taskForm.deadlineDate.includes('T')
+                  ? taskForm.deadlineDate.split('T')[1].slice(0,5)
+                  : (taskForm.deadlineTime || "")}
+                onChange={e => setTaskForm(form => {
+                  const date = form.deadlineDate
+                    ? form.deadlineDate.split('T')[0]
+                    : "";
+                  return {
+                    ...form,
+                    deadlineTime: e.target.value,
+                    deadlineDate: date
+                      ? `${date}T${e.target.value}`
+                      : ""
+                  };
+                })}
+              />
+            </label>
           </div>
           <div className="form-group">
             <label>Status</label>

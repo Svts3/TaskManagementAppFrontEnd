@@ -55,29 +55,6 @@ export default function TaskOverviewModal({ task, isOpen, onClose, isLoading = f
               <div className="task-overview-section">
                 <h3>Dates</h3>
                 <p><strong>Created:</strong> {new Date(task.creationDate).toLocaleDateString()}</p>
-                <p>
-                  <strong>Deadline:</strong> {task.deadlineDate ? (
-                    <span className={new Date(task.deadlineDate) < new Date() && task.status !== "DONE" ? "overdue" : ""}>
-                      {new Date(task.deadlineDate).toLocaleDateString()}
-                      {new Date(task.deadlineDate) < new Date() && task.status !== "DONE" && " (Overdue)"}
-                    </span>
-                  ) : "No deadline"}
-                </p>
-              </div>
-
-              <div className="task-overview-section">
-                <h3>People</h3>
-                <p><strong>Creator:</strong> {task.creator?.firstName} {task.creator?.lastName}</p>
-                <p><strong>Performers:</strong></p>
-                {task.performers?.length > 0 ? (
-                  <ul className="performers-list">
-                    {task.performers.map(performer => (
-                      <li key={performer.id}>{performer.firstName} {performer.lastName}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No performers assigned</p>
-                )}
                 <p style={{ marginTop: "12px" }}>
                   <strong>Deadline:</strong>{" "}
                   {task.deadlineDate
@@ -94,6 +71,21 @@ export default function TaskOverviewModal({ task, isOpen, onClose, isLoading = f
                       )
                     : "No deadline"}
                 </p>
+              </div>
+
+              <div className="task-overview-section">
+                <h3>People</h3>
+                <p><strong>Creator:</strong> {task.creator?.firstName} {task.creator?.lastName}</p>
+                <p><strong>Performers:</strong></p>
+                {task.performers?.length > 0 ? (
+                  <ul className="performers-list">
+                    {task.performers.map(performer => (
+                      <li key={performer.id}>{performer.firstName} {performer.lastName}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No performers assigned</p>
+                )}
               </div>
             </div>
             <div className="task-overview-actions" style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>

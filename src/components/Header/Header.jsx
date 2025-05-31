@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./Header.css";
+import { clearTokens } from "../../utils/auth";
 
 export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("accessToken"));
@@ -31,7 +32,7 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
+    clearTokens();
     setIsAuthenticated(false);
     setUserEmail("");
     dispatchAuthChanged();
