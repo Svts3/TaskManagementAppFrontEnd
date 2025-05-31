@@ -5,7 +5,9 @@ export default function TaskFilters({
   statusFilter, 
   setStatusFilter, 
   sortBy, 
-  setSortBy 
+  setSortBy, 
+  customStatuses = [],
+  renderAfterStatusFilter // optional render prop
 }) {
   return (
     <div className="task-filters">
@@ -20,8 +22,12 @@ export default function TaskFilters({
           <option value="TO_DO">To Do</option>
           <option value="IN_PROGRESS">In Progress</option>
           <option value="DONE">Done</option>
-          <option value="MY_TASKS">My Tasks</option>
+          <option value="My Tasks">My Tasks</option>
+          {customStatuses.map(status => (
+            <option key={status} value={status}>{status}</option>
+          ))}
         </select>
+        {renderAfterStatusFilter && renderAfterStatusFilter()}
       </div>
 
       <div className="filter-group">
@@ -50,4 +56,6 @@ TaskFilters.propTypes = {
   setStatusFilter: PropTypes.func.isRequired,
   sortBy: PropTypes.string.isRequired,
   setSortBy: PropTypes.func.isRequired,
+  customStatuses: PropTypes.arrayOf(PropTypes.string),
+  renderAfterStatusFilter: PropTypes.func, // add prop validation
 };

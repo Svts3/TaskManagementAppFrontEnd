@@ -54,10 +54,44 @@ export default function WorkspacePage() {
   const [taskFormError, setTaskFormError] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [isRemovePermissionsModalOpen, setIsRemovePermissionsModalOpen] = useState(false);
+  const [isManageStatusesOpen, setIsManageStatusesOpen] = useState(false);
+  const [newStatusInput, setNewStatusInput] = useState("");
 
   // Task filter and sort state
-  const [taskStatusFilter, setTaskStatusFilter] = useState('ALL'); // 'ALL', 'TO_DO', 'IN_PROGRESS', 'DONE'
-  const [taskSort, setTaskSort] = useState('creationDateDesc'); // default sort
+  const [taskStatusFilter, setTaskStatusFilter] = useState('ALL');
+  const [taskSort, setTaskSort] = useState('creationDateDesc');
+  // Custom statuses state (persisted per workspace in localStorage)
+  const [customStatuses, setCustomStatuses] = useState(() => {
+    const saved = localStorage.getItem(`customStatuses_${id}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Helper: get all statuses (default + custom)
+  const getAllStatuses = () => {
+    const defaults = ['TO_DO', 'IN_PROGRESS', 'DONE'];
+    return [...defaults, ...customStatuses.filter(s => !defaults.includes(s))];
+  };
+
+  // Add a new custom status (from TaskModal)
+  const handleAddCustomStatus = (status) => {
+    if (status && !getAllStatuses().includes(status)) {
+      setCustomStatuses(prev => {
+        const updated = [...prev, status];
+        localStorage.setItem(`customStatuses_${id}`, JSON.stringify(updated));
+        return updated;
+      });
+    }
+  };
+  // Remove a custom status (from TaskModal)
+  const handleRemoveCustomStatus = (status) => {
+    setCustomStatuses(prev => {
+      const updated = prev.filter(s => s !== status);
+      localStorage.setItem(`customStatuses_${id}`, JSON.stringify(updated));
+      // If the current filter is the removed status, reset to ALL
+      if (taskStatusFilter === status) setTaskStatusFilter('ALL');
+      return updated;
+    });
+  };
 
   const accessToken = localStorage.getItem("accessToken");
 
@@ -487,12 +521,13 @@ export default function WorkspacePage() {
   const getTaskColumns = () => {
     const filtered = getFilteredSortedTasks();
     if (taskStatusFilter === 'ALL') {
-      return {
-        TO_DO: filtered.filter(t => t.status === 'TO_DO'),
-        IN_PROGRESS: filtered.filter(t => t.status === 'IN_PROGRESS'),
-        DONE: filtered.filter(t => t.status === 'DONE'),
-        My_Tasks: filtered.filter(t => t.status === 'My Tasks'),
-      };
+      const allStatuses = getAllStatuses();
+      const columns = {};
+      allStatuses.forEach(status => {
+        columns[status] = filtered.filter(t => t.status === status);
+      });
+      columns['My_Tasks'] = filtered.filter(t => t.status === 'My Tasks');
+      return columns;
     } else {
       return {
         [taskStatusFilter]: filtered,
@@ -520,7 +555,7 @@ export default function WorkspacePage() {
 
   return (
     <div className="workspace-page">
-      <div className="workspace-nav">
+      <div className="workspace-nav" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
         <a href="/workspaces">
           <button className="nav-button">Go to Workspaces</button>
         </a>
@@ -530,6 +565,103 @@ export default function WorkspacePage() {
           setStatusFilter={setTaskStatusFilter}
           sortBy={taskSort}
           setSortBy={setTaskSort}
+          customStatuses={customStatuses}
+          renderAfterStatusFilter={() => (
+            <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="manage-status-btn"
+                style={{ background: '#2563eb', border: 'none', borderRadius: '50%', padding: 4, margin: '0 4px', cursor: 'pointer', fontSize: 16, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 1px 4px rgba(37,99,235,0.08)' }}
+                onClick={e => {
+                  e.stopPropagation();
+                  setIsManageStatusesOpen(v => !v);
+                }}
+                tabIndex={0}
+                id="manage-statuses-btn"
+                aria-label="Manage statuses"
+                title="Manage statuses"
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="4" y="9" width="12" height="2" rx="1" fill="white"/>
+                  <rect x="9" y="4" width="2" height="12" rx="1" fill="white"/>
+                </svg>
+              </button>
+              {isManageStatusesOpen && (
+                <div
+                  className="custom-status-manager-modal"
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 'calc(100% + 6px)',
+                    zIndex: 20,
+                    background: '#fff',
+                    border: '1px solid #eee',
+                    borderRadius: 8,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    padding: 16,
+                    minWidth: 260,
+                    marginLeft: 0
+                  }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 600, marginBottom: 8 }}>
+                    <span>Manage Statuses</span>
+                    <button type="button" onClick={() => setIsManageStatusesOpen(false)} style={{ background: 'none', border: 'none', fontSize: 20, color: '#888', cursor: 'pointer', lineHeight: 1, padding: 0 }} aria-label="Close">×</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                    <input
+                      type="text"
+                      placeholder="Add custom status"
+                      value={newStatusInput}
+                      onChange={e => setNewStatusInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && newStatusInput.trim()) {
+                          const val = newStatusInput.trim();
+                          if (!getAllStatuses().includes(val)) {
+                            handleAddCustomStatus(val);
+                          }
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const val = newStatusInput.trim();
+                        if (val && !getAllStatuses().includes(val)) {
+                          handleAddCustomStatus(val);
+                        }
+                      }}
+                      style={{ padding: '6px 12px' }}
+                      disabled={!newStatusInput.trim() || getAllStatuses().includes(newStatusInput.trim())}
+                    >Add</button>
+                  </div>
+                  {customStatuses.length > 0 ? (
+                    <div className="custom-status-list" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {customStatuses.map(status => (
+                        <span key={status} style={{ display: 'flex', alignItems: 'center', background: '#f1f1f1', borderRadius: 12, padding: '4px 10px', fontSize: 13 }}>
+                          {status}
+                          <button
+                            type="button"
+                            title="Remove status"
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to delete the status '${status}'?`)) {
+                                handleRemoveCustomStatus(status);
+                              }
+                            }}
+                            style={{ marginLeft: 6, background: 'none', border: 'none', color: '#dc3545', fontWeight: 'bold', cursor: 'pointer', fontSize: 15 }}
+                            aria-label={`Remove status ${status}`}
+                          >×</button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ color: '#888', fontSize: 13 }}>No custom statuses yet.</div>
+                  )}
+                </div>
+              )}
+            </span>
+          )}
         />
         <button
           className={`nav-button${activeTab === 'workspace-info' ? ' active' : ''}`}
@@ -623,6 +755,17 @@ export default function WorkspacePage() {
         editingTask={editingTask}
         setEditingTask={setEditingTask}
         setTaskFormError={setTaskFormError}
+        customStatuses={customStatuses}
+        addCustomStatus={handleAddCustomStatus}
+        removeCustomStatus={handleRemoveCustomStatus}
+        renderLogo={() => (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <svg width="40" height="40" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="9" width="12" height="2" rx="1" fill="#2563eb"/>
+              <rect x="9" y="4" width="2" height="12" rx="1" fill="#2563eb"/>
+            </svg>
+          </div>
+        )}
       />
       <InviteUserModal
         isOpen={isInviteModalOpen}

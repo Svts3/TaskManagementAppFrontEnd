@@ -47,8 +47,19 @@ export default function TaskOverviewModal({ task, isOpen, onClose, isLoading = f
 
               <div className="task-overview-section">
                 <h3>Status</h3>
-                <span className={`task-status ${task.status.toLowerCase()}`}>
-                  {task.status.replace('_', ' ')}
+                <span
+                  className={`task-status ${
+                    ["TO_DO", "IN_PROGRESS", "DONE"].includes(task.status)
+                      ? task.status.toLowerCase()
+                      : "custom-status"
+                  }`}
+                  style={
+                    ["TO_DO", "IN_PROGRESS", "DONE"].includes(task.status)
+                      ? {}
+                      : { background: '#888', color: '#fff', fontWeight: 500 }
+                  }
+                >
+                  {task.status.replace(/_/g, ' ')}
                 </span>
               </div>
 
