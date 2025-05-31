@@ -60,6 +60,7 @@ export default function WorkspacePage() {
   // Task filter and sort state
   const [taskStatusFilter, setTaskStatusFilter] = useState('ALL');
   const [taskSort, setTaskSort] = useState('creationDateDesc');
+  const [myTasksOnly, setMyTasksOnly] = useState(false); // new state
   // Custom statuses state (persisted per workspace in localStorage)
   const [customStatuses, setCustomStatuses] = useState(() => {
     const saved = localStorage.getItem(`customStatuses_${id}`);
@@ -471,53 +472,51 @@ export default function WorkspacePage() {
 
   // Filter and sorting functions
   const getFilteredSortedTasks = () => {
-  let filtered = tasks || [];
+    let filtered = tasks || [];
+    const userId = decodeJwt(accessToken)?.id;
 
-  const userId = decodeJwt(accessToken)?.id;
-
-  // Filter by status
-  if (taskStatusFilter === 'My Tasks') {
-    // Лише задачі, де користувач є виконавцем
-    filtered = filtered.filter(t =>
-      t.performers.some(p => p.id === Number(userId))
-    );
-  } else if (taskStatusFilter !== 'ALL') {
-    filtered = filtered.filter(t => t.status === taskStatusFilter);
-  }
-
-  // Sorting
-  const priorityMap = { HIGH: 3, MEDIUM: 2, LOW: 1, '': 0 };
-
-  return filtered.slice().sort((a, b) => {
-    switch (taskSort) {
-      case 'creationDateAsc':
-        return new Date(a.creationDate) - new Date(b.creationDate);
-      case 'creationDateDesc':
-        return new Date(b.creationDate) - new Date(a.creationDate);
-      case 'deadlineDateAsc': {
-        const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
-        const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
-        return aDate - bDate;
-      }
-      case 'deadlineDateDesc': {
-        const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
-        const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
-        return bDate - aDate;
-      }
-      case 'titleAsc':
-        return (a.title || '').localeCompare(b.title || '');
-      case 'titleDesc':
-        return (b.title || '').localeCompare(a.title || '');
-      case 'priorityDesc':
-        return (priorityMap[b.priority] || 0) - (priorityMap[a.priority] || 0);
-      case 'priorityAsc':
-        return (priorityMap[a.priority] || 0) - (priorityMap[b.priority] || 0);
-      default:
-        return 0;
+    // If 'My Tasks only' is checked, filter to only tasks where user is a performer
+    if (myTasksOnly && userId) {
+      filtered = filtered.filter(t => Array.isArray(t.performers) && t.performers.some(p => String(p.id) === String(userId)));
     }
-  });
-};
-  // Group tasks by status for TaskBoard columns
+
+    // Filter by status (but skip if status is 'ALL')
+    if (taskStatusFilter && taskStatusFilter !== 'ALL') {
+      filtered = filtered.filter(t => t.status === taskStatusFilter);
+    }
+
+    // Sorting
+    const priorityMap = { HIGH: 3, MEDIUM: 2, LOW: 1, '': 0 };
+    return filtered.slice().sort((a, b) => {
+      switch (taskSort) {
+        case 'creationDateAsc':
+          return new Date(a.creationDate) - new Date(b.creationDate);
+        case 'creationDateDesc':
+          return new Date(b.creationDate) - new Date(a.creationDate);
+        case 'deadlineDateAsc': {
+          const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
+          const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
+          return aDate - bDate;
+        }
+        case 'deadlineDateDesc': {
+          const aDate = a.deadlineDate ? new Date(a.deadlineDate) : new Date('9999-12-31');
+          const bDate = b.deadlineDate ? new Date(b.deadlineDate) : new Date('9999-12-31');
+          return bDate - aDate;
+        }
+        case 'titleAsc':
+          return (a.title || '').localeCompare(b.title || '');
+        case 'titleDesc':
+          return (b.title || '').localeCompare(a.title || '');
+        case 'priorityDesc':
+          return (priorityMap[b.priority] || 0) - (priorityMap[a.priority] || 0);
+        case 'priorityAsc':
+          return (priorityMap[a.priority] || 0) - (priorityMap[b.priority] || 0);
+        default:
+          return 0;
+      }
+    });
+  };
+
   const getTaskColumns = () => {
     const filtered = getFilteredSortedTasks();
     if (taskStatusFilter === 'ALL') {
@@ -526,7 +525,6 @@ export default function WorkspacePage() {
       allStatuses.forEach(status => {
         columns[status] = filtered.filter(t => t.status === status);
       });
-      columns['My_Tasks'] = filtered.filter(t => t.status === 'My Tasks');
       return columns;
     } else {
       return {
@@ -566,6 +564,8 @@ export default function WorkspacePage() {
           sortBy={taskSort}
           setSortBy={setTaskSort}
           customStatuses={customStatuses}
+          myTasksOnly={myTasksOnly}
+          setMyTasksOnly={setMyTasksOnly}
           renderAfterStatusFilter={() => (
             <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
               <button
